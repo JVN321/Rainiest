@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kerala Weather - Rainiest</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            transition: background 0.5s;
+        }
+        body.night {
+            background: linear-gradient(135deg, #232a4d 0%, #1a223a 100%);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        body.night .container, body.night h1, body.night .district, body.night .weather {
+            color: #e3eafc !important;
+        }
+        h1 {
+            text-align: center;
+            color: #00796b;
+            margin-bottom: 32px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+        .tile {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 32px 20px 20px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            position: relative;
+        }
+        body.night .tile {
+            background: #232a4d;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .tile:hover {
+            transform: translateY(-8px) scale(1.04);
+            box-shadow: 0 8px 24px rgba(0,150,136,0.18);
+            background: #e0f2f1;
+        }
+        body.night .tile:hover {
+            background: #28305a;
+        }
+        .district {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #00796b;
+            margin-bottom: 8px;
+        }
+        .weather {
+            font-size: 1em;
+            color: #333;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.3);
+            justify-content: center;
+            align-items: center;
+        }
+        body.night .modal-content {
+            background: #232a4d;
+            color: #e3eafc;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            min-width: 320px;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0,150,136,0.18);
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 1.5em;
+            color: #00796b;
+            cursor: pointer;
+        }
+        /* Canvas for rain animation */
+        #weatherCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kerala Weather - 14 Districts</h1>
+        <div class="grid" id="districtGrid">
+            <!-- Tiles will be injected here -->
+        </div>
+    </div>
+    <div class="modal" id="modal">
+        <div class="modal-content" id="modalContent">
+            <span class="close" id="closeModal">&times;</span>
+            <div id="modalDetails"></div>
+        </div>
+    </div>
+    <!-- Weather animation canvas inside modal for per-district animation -->
+    <canvas id="modalWeatherCanvas" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:1001;"></canvas>
+    <script>
+        // Kerala districts
+        const districts = [
+            "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam", "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram", "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
+        ];
+
+        // Placeholder for rain probability API response
+        // Example: { district: { rainProbability: 0.85, leaveAnnounced: true, fbPost: "https://facebook.com/collectorpost" } }
+        let rainData = {};
+
+        // Simulate API call (replace with real API)
+        async function fetchRainData() {
+            // TODO: Replace with real API endpoint
+            // Example API: `/api/rain?district=...`
+            // For demo, use actual rain data: isRaining: true/false
+            rainData = {};
+            const hour = new Date().getHours();
+            const isNight = hour < 6 || hour >= 18;
+            districts.forEach(d => {
+                // Simulate: more rain in day, less at night
+                const isRaining = isNight ? Math.random() < 0.2 : Math.random() < 0.6;
+                rainData[d] = {
+                    isRaining,
+                    leaveAnnounced: isRaining && Math.random() > 0.7,
+                    fbPost: isRaining && Math.random() > 0.7 ? `https://facebook.com/${d.replace(/\s/g,'').toLowerCase()}collector` : null
+                };
+            });
+        }
+
+        // Render tiles with rain info only
+        const grid = document.getElementById('districtGrid');
+        async function renderTiles() {
+            await fetchRainData();
+            // Set theme
+            const hour = new Date().getHours();
+            const isNight = hour < 6 || hour >= 18;
+            document.body.classList.toggle('night', isNight);
+            grid.innerHTML = '';
+            districts.forEach(d => {
+                const isRaining = rainData[d]?.isRaining ?? false;
+                const leave = rainData[d]?.leaveAnnounced;
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.innerHTML = `<div class="district">${d}</div>
+                    <div class="weather">${isRaining ? '<span style="color:#1976d2;font-weight:600;">Raining</span>' : (isNight ? '<span style="color:#ffe082;font-weight:600;">Night</span>' : '<span style="color:#388e3c;font-weight:600;">No Rain</span>')}</div>
+                    <div style="margin-top:8px;color:${leave?'#d32f2f':'#388e3c'};font-weight:600;">${leave ? 'Leave Likely' : 'No Leave Expected'}</div>`;
+                tile.onclick = () => showDetails(d);
+                grid.appendChild(tile);
+            });
+        }
+        renderTiles();
+
+        // Modal logic
+        const modal = document.getElementById('modal');
+        const modalDetails = document.getElementById('modalDetails');
+        const closeModal = document.getElementById('closeModal');
+
+        function showDetails(district) {
+            const data = rainData[district] || {};
+            let fbEmbed = '';
+            if (data.fbPost) {
+                fbEmbed = `
+                    <div style="margin-top:16px;">
+                        <iframe src="https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(data.fbPost)}&show_text=true&width=500"
+                            width="100%" height="350" style="border:none;overflow:hidden" scrolling="no" frameborder="0"
+                            allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                    </div>
+                `;
+            } else {
+                fbEmbed = '<p>No announcement yet.</p>';
+            }
+            modalDetails.innerHTML = `
+                <h2>${district}</h2>
+                <p><strong>Status:</strong> ${data.isRaining ? '<span style="color:#1976d2;font-weight:600;">Raining</span>' : (isNight() ? '<span style="color:#ffe082;font-weight:600;">Night</span>' : '<span style="color:#388e3c;font-weight:600;">No Rain</span>')}</p>
+                <p><strong>Educational Leave:</strong> ${data.leaveAnnounced ? '<span style="color:#d32f2f;font-weight:600;">Likely</span>' : '<span style="color:#388e3c;font-weight:600;">Not Expected</span>'}</p>
+                ${fbEmbed}
+            `;
+            modal.style.display = 'flex';
+            // Show and animate weather for this district
+            showWeatherAnimation(data);
+        }
+
+        closeModal.onclick = () => {
+            modal.style.display = 'none';
+            hideWeatherAnimation();
+        };
+        window.onclick = (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                hideWeatherAnimation();
+            }
+        };
+
+        // Modal weather animation logic
+        const modalCanvas = document.getElementById('modalWeatherCanvas');
+        let modalCtx = modalCanvas.getContext('2d');
+        let animationFrameId = null;
+        function resizeModalCanvas() {
+            modalCanvas.width = window.innerWidth;
+            modalCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeModalCanvas);
+
+        function isNight() {
+            const hour = new Date().getHours();
+            return hour < 6 || hour >= 18;
+        }
+
+        function showWeatherAnimation(data) {
+            resizeModalCanvas();
+            modalCanvas.style.display = 'block';
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (data.isRaining) {
+                animateRain(data);
+            } else if (isNight()) {
+                animateMoonClouds();
+            } else {
+                animateSunOrClouds();
+            }
+        }
+
+        function hideWeatherAnimation() {
+            modalCanvas.style.display = 'none';
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        }
+
+        // Rain animation
+        function animateRain(data) {
+            const raindrops = Array.from({length: 80}, () => ({
+                x: Math.random() * modalCanvas.width,
+                y: Math.random() * modalCanvas.height,
+                l: Math.random() * 15 + 10,
+                xs: Math.random() * 2 - 1,
+                ys: Math.random() * 6 + 4
+            }));
+            function drawRain() {
+                modalCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+                // Draw clouds
+                drawCloud(modalCtx, modalCanvas.width/2-120, 80, 80);
+                drawCloud(modalCtx, modalCanvas.width/2+60, 100, 60);
+                // Draw raindrops
+                modalCtx.strokeStyle = 'rgba(100,180,255,0.6)';
+                modalCtx.lineWidth = 2;
+                modalCtx.beginPath();
+                raindrops.forEach(r => {
+                    modalCtx.moveTo(r.x, r.y);
+                    modalCtx.lineTo(r.x + r.xs, r.y + r.l);
+                });
+                modalCtx.stroke();
+                raindrops.forEach(r => {
+                    r.x += r.xs;
+                    r.y += r.ys;
+                    if (r.y > modalCanvas.height) {
+                        r.x = Math.random() * modalCanvas.width;
+                        r.y = -20;
+                    }
+                });
+                // Lightning occasionally
+                if (data.rainProbability > 0.85 && Math.random() > 0.97) {
+                    modalCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                    modalCtx.fillRect(0, 0, modalCanvas.width, modalCanvas.height);
+                }
+                animationFrameId = requestAnimationFrame(drawRain);
+            }
+            drawRain();
+        }
+
+        // Moving clouds for day
+        function animateSunOrClouds() {
+            let cloudX = Math.random() * modalCanvas.width;
+            function draw() {
+                modalCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+                drawSun(modalCtx, modalCanvas.width/2, 120, 60);
+                for (let i=0; i<3; i++) {
+                    drawCloud(modalCtx, cloudX + i*180, 100 + i*30, 80 + Math.random()*20);
+                }
+                cloudX += 1.2;
+                if (cloudX > modalCanvas.width) cloudX = -200;
+                animationFrameId = requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // Moon and moving clouds for night
+        function animateMoonClouds() {
+            let cloudX = Math.random() * modalCanvas.width;
+            function draw() {
+                modalCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+                drawMoon(modalCtx, modalCanvas.width/2, 120, 50);
+                for (let i=0; i<3; i++) {
+                    drawCloud(modalCtx, cloudX + i*180, 100 + i*30, 80 + Math.random()*20);
+                }
+                cloudX += 0.8;
+                if (cloudX > modalCanvas.width) cloudX = -200;
+                animationFrameId = requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // Helper: draw cloud
+        function drawCloud(ctx, x, y, size) {
+            ctx.save();
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#cfd8dc';
+            ctx.beginPath();
+            ctx.arc(x, y, size*0.5, Math.PI*0.5, Math.PI*1.5);
+            ctx.arc(x+size*0.5, y-size*0.5, size*0.5, Math.PI*1, Math.PI*2);
+            ctx.arc(x+size, y, size*0.5, Math.PI*1.5, Math.PI*0.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Helper: draw sun
+        function drawSun(ctx, x, y, r) {
+            ctx.save();
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI*2);
+            ctx.fillStyle = '#ffe082';
+            ctx.shadowColor = '#ffd54f';
+            ctx.shadowBlur = 30;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Helper: draw moon
+        function drawMoon(ctx, x, y, r) {
+            ctx.save();
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI*2);
+            ctx.fillStyle = '#b0bec5';
+            ctx.shadowColor = '#eceff1';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            // Crescent effect
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x+15, y-10, r*0.8, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
