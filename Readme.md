@@ -26,10 +26,3 @@ Features interactive tiles, dynamic weather animations (rain, clouds, sun, moon)
 
 No build tools required. Just open `index.html` in your browser.
 
-
-   ```
-   *(If you get an error, try `main` instead of `master`)*
-
----
-
-**Need help with API integration or cloud images? Let
