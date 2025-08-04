@@ -26,34 +26,7 @@ Features interactive tiles, dynamic weather animations (rain, clouds, sun, moon)
 
 No build tools required. Just open `index.html` in your browser.
 
-## How to Push to a New GitHub Repository
 
-1. **Initialize Git in your project folder:**
-   ```sh
-   git init
-   ```
-
-2. **Add all files:**
-   ```sh
-   git add .
-   ```
-
-3. **Commit your changes:**
-   ```sh
-   git commit -m "Initial commit: Kerala Rainiest Dashboard"
-   ```
-
-4. **Create a new repository on GitHub**  
-   Go to [GitHub](https://github.com/) and create a new repository (do not initialize with README).
-
-5. **Add your remote:**
-   ```sh
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   ```
-
-6. **Push your code:**
-   ```sh
-   git push -u origin master
    ```
    *(If you get an error, try `main` instead of `master`)*
 
