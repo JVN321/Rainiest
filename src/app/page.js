@@ -1,103 +1,137 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import DistrictTile from "./components/DistrictTile";
+import Modal from "./components/Modal";
+import WeatherCanvas from "./components/WeatherCanvas";
+
+const districts = [
+    "Thiruvananthapuram",
+    "Kollam",
+    "Pathanamthitta",
+    "Alappuzha",
+    "Kottayam",
+    "Idukki",
+    "Ernakulam",
+    "Thrissur",
+    "Palakkad",
+    "Malappuram",
+    "Kozhikode",
+    "Wayanad",
+    "Kannur",
+    "Kasaragod",
+];
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    const [districtData, setDistrictData] = useState({});
+    const [selectedDistrict, setSelectedDistrict] = useState(null);
+    const [isNight, setIsNight] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    useEffect(() => {
+        const checkTime = () => {
+            const hour = new Date().getHours();
+            setIsNight(hour < 6 || hour >= 18);
+        };
+
+        checkTime();
+        const interval = setInterval(checkTime, 60000); // Check every minute
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        fetchDistrictData();
+    }, []);
+
+    const fetchDistrictData = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch("/api/districts");
+            const data = await response.json();
+            setDistrictData(data);
+        } catch (error) {
+            console.error("Error fetching district data:", error);
+            // Set mock data for development
+            const mockData = {};
+            districts.forEach((district) => {
+                mockData[district] = {
+                    hasLeaveInfo: Math.random() > 0.7,
+                    likelyLeave: Math.random() > 0.8,
+                    lastUpdated: new Date().toISOString(),
+                    keywords: [],
+                    fbPost: null,
+                };
+            });
+            setDistrictData(mockData);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div
+            className={`min-h-screen transition-all duration-500 ${
+                isNight
+                    ? "bg-gradient-to-br from-slate-800 to-slate-900 text-slate-100"
+                    : "bg-gradient-to-br from-cyan-50 to-blue-100 text-slate-800"
+            }`}
+        >
+            <div className="container mx-auto px-4 py-8 max-w-6xl">
+                <div className="text-center mb-8">
+                    <h1 className={`text-4xl font-bold mb-2 ${isNight ? "text-slate-100" : "text-teal-700"}`}>
+                        Kerala Weather Dashboard
+                    </h1>
+                    <p className="text-lg opacity-80">
+                        Live rain status and educational leave announcements for all 14 districts
+                    </p>
+                </div>
+
+                <button
+                    onClick={fetchDistrictData}
+                    disabled={loading}
+                    className={`fixed top-4 right-4 px-6 py-3 rounded-full font-medium transition-all ${
+                        isNight
+                            ? "bg-slate-700 hover:bg-slate-600 text-slate-100"
+                            : "bg-teal-600 hover:bg-teal-700 text-white"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : "hover:scale-105"} shadow-lg`}
+                >
+                    {loading ? "Updating..." : "Refresh Data"}
+                </button>
+
+                {loading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-current"></div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {districts.map((district) => (
+                            <DistrictTile
+                                key={district}
+                                district={district}
+                                data={districtData[district] || {}}
+                                isNight={isNight}
+                                onClick={() => setSelectedDistrict(district)}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {selectedDistrict && (
+                    <Modal
+                        district={selectedDistrict}
+                        data={districtData[selectedDistrict] || {}}
+                        isNight={isNight}
+                        onClose={() => setSelectedDistrict(null)}
+                    />
+                )}
+
+                <WeatherCanvas
+                    isVisible={selectedDistrict !== null}
+                    districtData={districtData[selectedDistrict] || {}}
+                    isNight={isNight}
+                />
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
