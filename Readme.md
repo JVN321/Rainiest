@@ -24,4 +24,9 @@ Features interactive tiles, dynamic weather animations (rain, clouds, sun, moon)
 
 ## Local Development
 
+<<<<<<< HEAD
 No build tools required. Just open `index.html` in your browser.
+=======
+No build tools required. Just open `index.html` in your browser.
+
+>>>>>>> 120c4536ee48717a087f3c07d32dd64ca39f2554
