@@ -1,32 +1,36 @@
-# Rainiest Kerala - District Rain & Leave Dashboard
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-A modern web dashboard showing live rain status and educational leave announcements for all 14 districts of Kerala.  
-Features interactive tiles, dynamic weather animations (rain, clouds, sun, moon), and embedded Facebook posts from district collectors.
+## Getting Started
 
-## Features
+First, run the development server:
 
-- **Live Rain Status:** See if it's raining in each district.
-- **Educational Leave Alerts:** Shows if leave is likely due to heavy rain.
-- **Collector Announcements:** Embedded Facebook posts if available.
-- **Dynamic Animations:** Rain, clouds, sun, and moon animations in modal per district.
-- **Day/Night Theme:** Website theme and animations change based on time.
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-## Usage
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. Open `index.html` in your browser.
-2. Click any district tile for detailed info and animation.
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-## Customization
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-- Replace the rain data API in `fetchRainData()` with your own endpoint.
-- You can provide your own cloud PNGs for more realistic clouds.
-- Edit styles in the `<style>` section for custom themes.
+## Learn More
 
-## Local Development
+To learn more about Next.js, take a look at the following resources:
 
-<<<<<<< HEAD
-No build tools required. Just open `index.html` in your browser.
-=======
-No build tools required. Just open `index.html` in your browser.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
->>>>>>> 120c4536ee48717a087f3c07d32dd64ca39f2554
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
